@@ -1,0 +1,6 @@
+name = "Interactive Image"
+description = "This module adds interactivity to images, by adding response behaviours to mouse actions on those images."
+core = "7.x"
+package = "Interactive Image"
+version = "7.x-1.0"
+configure = admin/config/user-interface/interactive_image
