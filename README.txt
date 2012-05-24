@@ -22,8 +22,7 @@ INSTALLATION:
 1. Download Jquery Cluetip plugin from https://github.com/kswedberg/jquery-cluetip/downloads and extract the contents into the following location: 'sites/all/libraries'. Rename the folder containing the Jquery Cluetip files as 'jquery-cluetip'.
 
 
-2. Download Jquery UI from http://jqueryui.com/download with at least the draggable interaction included, and extract the contents into the following location: 'sites/all/libraries'. Rename the folder containing the Jquery UI files as 'jquery-ui'.
-
+2. Download Jquery UI from http://jqueryui.com/download with at least the draggable interaction included, and extract the contents into the following location: 'sites/all/libraries/jquery-ui'.
 
 3. Download and place the entire interactive_image directory into sites/all/modules/ directory.
 

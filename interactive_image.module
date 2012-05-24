@@ -579,7 +579,7 @@ function interactive_image_libraries_info() {
 			'library path' => 'sites/all/libraries/jquery-cluetip',
 			'version arguments' => array(
 				'file' => 'jquery.cluetip.js',
-				'pattern' => '/v([\d.]+)/',
+				'pattern' => '/v?([\d.]+)/',
 				'lines' => 5,
 				'cols' => 20
 			)
@@ -603,7 +603,7 @@ function interactive_image_libraries_info() {
 			'library path' => 'sites/all/libraries/jquery-ui',
 			'version arguments' => array(
 				'file' => 'js/' . $jquery_ui_file_name,
-				'pattern' => '/v([\d.]+)/',
+				'pattern' => '/v?([\d.]+)/',
 				'lines' => 5,
 				'cols' => 20
 			)
