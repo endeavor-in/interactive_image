@@ -59,9 +59,9 @@ display:block !important;
 	height: 38px;
 }
 
-.zoomout
+.zoomout, .zoomin
 {
-	background-position:-36px 50%;
+	width: 30px;
 }
 
 /**

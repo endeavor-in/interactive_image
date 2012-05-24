@@ -623,7 +623,6 @@ function interactive_image_libraries_info() {
 function interactive_image_menu_alter(&$items) {
 	//for hiding hotspot content type in menus
   if (isset($items['node/add/hotspot'])) {
-    //$items['node/add/hotspot']['type'] = MENU_DEFAULT_LOCAL_TASK;
-    $items['node/add/hotspot']['type'] = MENU_CALLBACK;
+    $items['node/add/hotspot']['type'] = MENU_DEFAULT_LOCAL_TASK;
   }
 }

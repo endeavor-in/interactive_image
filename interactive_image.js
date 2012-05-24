@@ -50,9 +50,13 @@
     var image_height = $('#interactive-image').height();
     image_width      = $('#interactive-image').width();
     new_image_width  = image_width;
-
+    
     //zoom in 
     $('.zoomin').click(function() {
+      if (image_height == 0) {
+    	  image_height = $('#interactive-image').height();  
+      }
+      
       zoom_factor = zoom_factor + 0.25;
 
       if (max_width >=  (image_width + (zoom_factor * image_width))) {
