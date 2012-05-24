@@ -1,0 +1,626 @@
+<?php
+
+/**
+ * @file This module adds interactivity to images by adding response behaviours to mouse actions.
+ * Two content types viz. interactive_image and hotspots are automatically created on installing 
+ * this module, along their respective fields. The interactive images respond to mouse actions such 
+ * as double clicks and mouseovers. The images can be of very large size, which which case they are 
+ * re-sized and displayed. Such images can be zoomed to view the fine details of select areas. 
+ *   
+ */
+
+/**
+ * Implements of hook_init().
+ */
+
+function interactive_image_init() {
+  global $user, $base_path;
+  
+  //check cluetip admin settings  
+  $cluetip_values = variable_get('interactive_image_cluetip_settings');
+  if(!isset($cluetip_values)){
+	  $cluetip_values = array(
+	 			'width' => '',
+	 			'height' => '',
+	 			'dropShadow' => 0,
+	 			'sticky' => 1,
+	 			'cluetipClass' => 'default'
+	  );
+	
+	  variable_set('interactive_image_cluetip_settings', $cluetip_values);
+	} 
+	 
+  //addding js,css files and passing data to the jquery  only if the page is node
+  if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
+    $node 				= node_load(arg(1));
+    $library_path = 'sites/all/libraries';
+    if ($node) {
+	    if ($node->type == 'interactive_image') {
+	      	
+	      //adding jquery cluetip plugin js & css
+	      $library = libraries_detect('jquery-cluetip');
+	      
+				if (isset($library['error'])) {
+					drupal_set_message($library['error message'] . '<br />' . l('Download', $library['download url']) . ' and Install the library in ' . $library['library path'] . '.', 'error');
+				}
+				else {
+					$library = libraries_load('jquery-cluetip');
+				}
+
+	      //adding jquery ui plugin js
+	      $library = libraries_detect('jquery-ui');
+	      
+	    	if (isset($library['error'])) {
+					drupal_set_message($library['error message'] . '<br />' . l('Download', $library['download url']) . ' and Install the library in ' . $library['library path'] . '.', 'error');
+				}
+				else {
+					$library = libraries_load('jquery-ui');
+				}
+				
+	      //adding js & css files of the module
+	      drupal_add_js(drupal_get_path('module', 'interactive_image') . '/interactive_image.js', 'file');
+	      drupal_add_css(drupal_get_path('module', 'interactive_image') . '/interactive_image.css', array('group' => CSS_DEFAULT));
+	      
+	      //get interactive_image width,height,type,attribute
+	      list($interactive_image_width, $interactive_image_height, $interactive_image_type, $interactive_image_attr) = getimagesize(_interactive_image_get_field_value('node', $node, 'field_interactive_image','uri'));
+	      
+	      //get visible width (get configuration image width)
+	      $interactive_image_visible_width = variable_get('interactive_image_visible_width');
+	      
+	      $show_zoom_buttons = false;
+	      
+				if ($interactive_image_width > $interactive_image_visible_width) {
+					$show_zoom_buttons = true;
+				}
+				
+				variable_set('interactive_image_show_zoom_buttons', $show_zoom_buttons);
+	
+	      $cluetip_settings = variable_get('interactive_image_cluetip_settings',	NULL);
+	      	
+	      //If cluetip admin settings is available then pass data to the jquery
+	      if ($cluetip_settings) {
+	        foreach ($cluetip_settings as $key => $value) {
+	          if ($value === NULL) {
+	            unset($cluetip_settings[$key]);
+	          }
+	        }
+	
+	        $cluetip_settings['width'] = $cluetip_settings['width'] ?  $cluetip_settings['width']	:	'auto';
+	        $cluetip_settings['height'] = $cluetip_settings['height'] ?  $cluetip_settings['height']	:	'auto';
+	        drupal_add_js(array('interactive_image' => array('cluetip' => $cluetip_settings)), 'setting');
+	      }
+	      
+	      $rte_editor = NULL;
+	      
+	      //checking what kind of editor is used in the project
+	      if (module_exists('ckeditor')) {
+	        $rte_editor = 'ckeditor';
+	      }
+	      else if (module_exists('wysiwyg')) {
+	        $rte_editor = 'wysiwyg';
+	      }
+	      else {
+	        $rte_editor = 'normal';
+	      }
+	      
+	      //for users with create hotspots permission
+	      $create_hotspots = user_access('create hotspots',	$user);
+	      if ($create_hotspots) {
+	        drupal_add_js(array('interactive_image' => array('create_hotspots' => $create_hotspots)), 'setting');
+	      }
+						      	
+	      drupal_add_js(array('interactive_image' => array('rte_editor' => $rte_editor)), 'setting');
+	    }
+    }
+  }
+}
+
+/**
+ * This function scans the Jquery UI 'js' folder and retrieves the exact name of Jquery UI file 
+ * 
+ * @param $js_path
+ *   path of the js folder of Jquery UI relative to base path 
+ *   
+ * @return 
+ *   the name of the jquery-ui js file, if found
+ *   FALSE if the required file is not found 
+ */
+
+function _interactive_image_get_jquery_ui_file_name($js_path) {
+	$abs_js_path = $_SERVER['DOCUMENT_ROOT'] . base_path() . $js_path;
+	
+	$jquery_ui_file_name = 'jquery-ui.js';
+	
+	$jquery_ui_js_files = array();
+	
+	if (is_dir($abs_js_path)) {//scans the directory for files only if directory exists
+		$jquery_ui_js_files = scandir($abs_js_path);
+	}
+	
+	if (is_array($jquery_ui_js_files)) {
+	  foreach ($jquery_ui_js_files as $file) {
+	    if (preg_match('/jquery-ui/',	$file)) {
+	      $jquery_ui_file_name =	$file;
+	      break;
+	    }
+	  }
+	}
+  return $jquery_ui_file_name;
+}
+
+
+/**
+ * Implements hook_permission().
+ */
+
+function interactive_image_permission() {
+  return array(
+    'create hotspots' => array(
+      'title' => t('Create Hotspots'),
+     ),
+  );
+}
+
+/**
+ * Implements hook_menu().
+ */
+
+function interactive_image_menu() {
+  $items['hotspot/create'] = array(
+		'title' => 'Create Hotspot',
+		'page callback' => 'interactive_image_create_hotspot_submit',
+		'access callback' => true,
+  );
+
+  $items['hotspot/show'] = array(
+    'page callback'   => 'interactive_image_show_hotspot',
+  	'access callback' => true,
+  );
+
+  $items['admin/config/user-interface/interactive_image'] = array(
+	  'title' => 'Interactive Image',
+	  'description' => "Change Interactive Image settings.",
+	  'page callback' => 'drupal_get_form',
+   	'page arguments' => array('interactive_image_settings'),
+	  'access arguments' => array('administer url aliases'),
+	  'weight' => -5,
+  );
+  
+  return $items;
+}
+
+/**
+ * This function show Hotspots in Interactive Image
+ * 
+ * @param $nid 
+ *    
+ */
+function interactive_image_show_hotspot($nid) {
+  $node = node_load($nid);
+  $parent_nid =  _interactive_image_get_field_value('node', $node, 'field_parent_nid', 'value');
+  global $user;
+
+  if (user_access('Edit node',	$user)) {
+    print l(t('Edit'),	'node/' . $nid . '/edit',	array('query' => array('destination' => 'node/' . $parent_nid))) . '<br>';
+  }
+  print render(_interactive_image_get_field_value('node', $node, 'field_description', 'value'));
+}
+
+/**
+ * Implements hook_field_attach_view_alter
+ * 
+ * In this function, the '#theme' attribute of the image field 
+ * is changed to use our custom theme, which offers the required 
+ * interactivity
+ */
+function interactive_image_field_attach_view_alter(&$output, $context) {
+  if ($context['entity_type'] == 'node' && $context['entity']->type == 'interactive_image' && $context['view_mode'] == 'full' ) {
+    $output['field_interactive_image']['#theme'] =  'interactive_image';
+  }
+}
+
+/**
+ * Implements hook_theme()
+ */
+
+function interactive_image_theme($existing, $type, $theme, $path) {
+  return array(
+   	'interactive_image' => array(
+      'template' => 'interactive_image-page',
+    	'variables' => array('node' => null, 'form' => null)
+    )
+  );
+}
+
+/**
+ * Implements hook_preprocess_hook
+ * 
+ * @param $variables
+ *   An associative array containing:
+ *    - node: The node object of type 'interactive_image'
+ *    - form: the form array for building the hotspot creation form 
+ *        which needs to be rendered in this template 
+ */
+
+function interactive_image_preprocess_interactive_image(&$variables) {
+  if (node_access_view_all_nodes()) {
+    if (!$variables['node']) {
+      if (arg(0) == 'node' && is_numeric(arg(1)) && !arg(2)) {
+        $nid 	= arg(1);
+        $node = node_load($nid);
+      }
+      else {
+        return;
+      }
+    }
+    else {
+      $node = $variables['node'];
+      $nid 	= $node->nid;
+    }
+
+    //variables value send interactive_image-page.tpl.php
+    $variables['hotspot_label']				= _interactive_image_get_field_value('node', $node, 'field_hotspot_label', 'value');
+    $variables['image_uri'] 					= _interactive_image_get_field_value('node', $node, 'field_interactive_image', 'uri');
+    $variables['image_nid'] 					= $nid;
+    $variables['hotspots'] 						= interactive_image_get_hotspots($nid);
+    $variables['show_zoom_buttons']   = variable_get('interactive_image_show_zoom_buttons');
+    $hotspot_image = _interactive_image_get_field_value('node', $node, 'field_hotspot_icon', 'uri');
+    if($hotspot_image) {
+			$variables['hotspot_image'] 			= $hotspot_image;
+			//get hotspot image width and height
+			list($hotspot_width, $hotspot_height, $hotspot_type, $hotspot_attr) = getimagesize(file_create_url($variables['hotspot_image']));
+			if($hotspot_height > 20)
+			{
+				$hotspot_height = 20;
+			}
+			if($hotspot_width > 20)
+			{
+				$hotspot_width = 20;
+			}
+    }
+		else {
+			$hotspot_width = 5;
+			$hotspot_height = 5;
+		}
+
+    //hotspot image width,height send js
+    drupal_add_js(array('interactive_image' => array('hotspots_data' => array('hotspot' => $variables['hotspots'],'hotspot_width' => $hotspot_width,'hotspot_height' => $hotspot_height))),	'setting');
+
+    //for users with create hotspot permission
+    global $user;
+    $variables['create_hotspots'] = user_access('create hotspots',	$user);
+
+    if (!$variables['form'] && $variables['create_hotspots']) {
+      $variables['form'] = drupal_get_form('interactive_image_create_hotspot',	$nid);
+    }
+  }
+}
+
+/**
+ * This function retrives all hotspots belonging to an interactive image 
+ * 
+ * @param $nid
+ *   nid of the interactive_image node
+ *   
+ * @return 
+ *   an array of all hotspots, with title, coordinates, etc 
+ */
+function interactive_image_get_hotspots($nid) {
+  $hotspots = array();
+  $efq 			= new EntityFieldQuery();
+  $result = $efq->entityCondition('entity_type', 'node')
+                ->propertyCondition('type', 'hotspot')
+                ->fieldCondition('field_parent_nid',	'value',	$nid)
+                ->execute();
+  	
+  if (isset($result['node'])) {
+    $nodes = entity_load('node',	array_keys($result['node']));
+
+    foreach ($nodes as $node) {
+      $coordinates 	= _interactive_image_get_field_value('node', $node, 'field_coordinates', 'value');
+      $left 				= strtok($coordinates,	',');
+      $top 					= strtok(',');
+      $hotspots[] = array(
+				'nid' => $node->nid,
+	      'title' => $node->title,      
+	      'left' => $left,
+	      'top' => $top
+      );
+    }
+  }
+  	
+  return $hotspots;
+}
+
+/**
+ * Form builder function to create a new hotspot. It would be rendered inside the interactive image page template.
+ * 
+ * @param $form
+ * @param $form_state
+ * @param $image_nid
+ *    $image_nid is current Interactive Image node-id
+ *    
+ * @return 
+ *    Create hotspot form
+ */
+function interactive_image_create_hotspot($form = NULL, &$form_state = NULL, $image_nid = NULL) {
+  $form['title'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Title'),
+		'#description' => t('Enter Title'),
+		'#size' => 30
+  );
+
+  global $user;
+  $login_user = array_values($user->roles);
+
+  if ($login_user[0] == 'anonymous user') {
+    $html_format = 'filtered_html';
+  }
+  else {
+    $html_format = 'full_html';
+  }
+
+  $form['description'] = array(
+		'#type' => 'text_format',
+		'#title' => t('Description'),
+		'#description' => t('Enter Description'),
+		'#cols' => 30,
+		'#format' => $html_format
+  );
+
+  if ($image_nid) {
+	  $form['image_nid'] = array(
+			'#type' => 'hidden',
+			'#value' => $image_nid
+	  );
+  }
+  $form['coordinates'] = array(
+		'#type' => 'hidden',
+		'#id' => 'coordinates'
+	);
+
+	$form['button'] = array(
+	  '#markup' => '<input type="button" id="fake-submit" value="Submit" />',
+	);
+
+	$form['submit'] = array(
+		'#type' => 'submit',
+		'#value' => t('Submit'),
+		'#ajax' => array(
+			'callback' => 'interactive_image_create_hotspot_callback',
+			'wrapper' => 'interactive-image-template',
+      'method' => 'replace'
+    )
+  );
+  return $form;
+}
+
+/**
+ * AJAX callback for the Create hotspot form. It creates the new hotspot node.
+ * 
+ * @param $form
+ * @param $form_state
+ *   
+ * @return 
+ *   the re-drawn Interactive Image page with the new hotspot
+ */
+
+function interactive_image_create_hotspot_callback($form,$form_state){
+  global $user;
+  $title = $form_state['values']['title'];
+  if($title)
+  {
+	  $image_nid = $form_state['values']['image_nid'];
+	  $coordinates = $form_state['values']['coordinates'];
+	  $description_value = $form_state['values']['description']['value'];
+	  $description_format = $form_state['values']['description']['format'];
+	
+	  $node = array(
+	    'type' => 'hotspot',
+	    'uid' => $user->uid,
+	    'title' => $title,    
+	  );
+	  
+		$node = (object)$node;
+		$node->field_coordinates[LANGUAGE_NONE][0]['value']  	= $coordinates;
+	  $node->field_description[LANGUAGE_NONE][0]['value']  	= $description_value;
+	  $node->field_description[LANGUAGE_NONE][0]['format'] 	= $description_format;
+	  $node->field_parent_nid[LANGUAGE_NONE][0]['value'] 		= $image_nid;
+	  node_save($node);
+	  $image_node = node_load($image_nid);
+	  $html 			= theme('interactive_image',	array('node' => $image_node, 'form' => $form));
+	  return $html;
+  }
+}
+
+/**
+ * This function builds the admin settings form for configuring the modal window of hotspots
+ * 
+ * @param $form
+ * @param $form_state 
+ *   
+ * @return 
+ *   admin settings form for modal window
+ *   
+ */
+function interactive_image_settings($form,$form_state) {
+  $cluetip_values 									= variable_get('interactive_image_cluetip_settings', '');
+  $interactive_image_visible_width	= variable_get('interactive_image_visible_width','');
+
+  $form['interactive_image'] = array(
+		'#type' => 'fieldset',
+    '#title' => t('Interactive image settings'),
+		'#collapsible' => TRUE,	
+  );
+
+  $form['interactive_image']['visible_width'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Interactive Image Visible Width'),
+		'#description' => t('Enter visible width. Leave empty for default value. NOTE : Changing this will affect existing interactive images.'),
+		'#default_value' => $interactive_image_visible_width,
+		'#size' => 30,
+ 	);
+
+ 	$form['cluetip'] = array('#type' => 'fieldset',
+    '#title' => t('Hotspot Modal Window Settings'),
+		'#collapsible' => TRUE,
+  );
+
+  $form['cluetip']['width'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Width'),
+		'#description' => t('Enter Width. Leave empty for default value'),
+		'#default_value' => isset($cluetip_values['width']) ? $cluetip_values['width']	:	'',
+		'#size' => 30,
+  );
+
+  $form['cluetip']['height'] = array(
+		'#type' => 'textfield',
+		'#title' => t('Height'),
+		'#description' => t('Enter Height. Leave empty for default value'),
+		'#default_value' => isset($cluetip_values['height']) ? $cluetip_values['height']	:	'',
+		'#size' => 30,
+  );
+
+  $form['cluetip']['drop_shadow'] = array(
+		'#type' => 'checkbox',
+		'#description' => t('If checked, a drop shadow will be displayed for the modal window'),
+		'#title' => t('Show Drop Shadow'),
+		'#default_value' => isset($cluetip_values['dropShadow']) ? $cluetip_values['dropShadow']:0,
+  );
+
+  $form['cluetip']['sticky'] = array(
+		'#type' => 'checkbox',
+		'#description' => t('If checked, the modal window will be displayed as a sticky with a close link'),
+		'#default_value' => isset($cluetip_values['sticky']) ? $cluetip_values['sticky']:1,
+		'#title' => t('Sticky'),
+  );
+
+   $options = array(
+    'default' => 'Default',
+		'jtip' => 'Jtip',
+		'rounded' => 'Rounded'
+	 );
+
+    $form['cluetip']['cluetip_class'] = array(
+      '#type' => 'select',
+    	'#description' => t('Select the class'),
+    	'#title' => t('Modal Window Class'),
+    	'#options' => $options,
+    	'#default_value' => isset($cluetip_values['cluetipClass']) ? $cluetip_values['cluetipClass']: 'default',
+    );
+  
+  	$form['submit'] = array(
+  	 '#type' => 'submit',
+  	 '#value' => t('Save Configuration'),
+  	);
+  
+  	return $form;
+}
+
+/**
+ * This function saves settings of modal window for hotspots
+ * 
+ * @param $form
+ * @param $form_state
+ *  
+ */
+function interactive_image_settings_submit($form,$form_state) {
+  $visible_width = $form_state['values']['visible_width'];
+  $width 		 = $form_state['values']['width'];
+  $height 		 = $form_state['values']['height'];
+  $drop_shadow 	 = $form_state['values']['drop_shadow'];
+  $sticky 		 = $form_state['values']['sticky'];
+  $cluetip_class = $form_state['values']['cluetip_class'];
+
+  $cluetip_values = array(
+ 		'width' => $width,
+ 		'height' => $height,
+ 		'dropShadow' => $drop_shadow,
+ 		'sticky' => $sticky,
+ 		'cluetipClass' => $cluetip_class
+  );
+
+  variable_set('interactive_image_cluetip_settings', $cluetip_values);
+  variable_set('interactive_image_visible_width', $visible_width);
+  drupal_set_message(t('Settings saved for Interactive Images'), 'status');
+}
+
+function _interactive_image_get_field_value($entity_type, $node, $field_name, $value){
+	$language = field_language($entity_type, $node, $field_name);
+	if(isset($node->{$field_name}[$language]))
+	{
+		$field_value	= $node->{$field_name}[$language][0][$value];
+		return $field_value;
+	}
+	else 
+	{
+		return null;
+	}
+}
+
+function interactive_image_libraries_info() {
+	$libraries = array();
+
+	if (!libraries_detect('jquery-cluetip')) {
+		$x = 0;
+		$libraries['jquery-cluetip'] = array(
+			'name' => 'JQuery Cluetip',
+			'vendor url' => 'http://plugins.learningjquery.com/cluetip/',
+			'download url' => 'https://github.com/kswedberg/jquery-cluetip/tarball/master',
+			'files' => array(
+				'js' => array('jquery.cluetip.js'),
+				'css' => array('jquery.cluetip.css')
+			),
+			'library path' => 'sites/all/libraries/jquery-cluetip',
+			'version arguments' => array(
+				'file' => 'jquery.cluetip.js',
+				'pattern' => '/v([\d.]+)/',
+				'lines' => 5,
+				'cols' => 20
+			)
+		);
+	}
+	
+	if (!libraries_detect('jquery-ui')) {
+		// using a function call to get the exact filename of the Jquery UI JS file
+		$plugin_path = 'sites/all/libraries/jquery-ui';
+		$jquery_ui_file_name = _interactive_image_get_jquery_ui_file_name($plugin_path . '/js');
+
+		$libraries['jquery-ui'] = array(
+			'name' => 'JQuery UI',
+			'vendor url' => 'http://jqueryui.com',
+			'download url' => 'http://jqueryui.com/download/',
+			'files' => array(
+				'js' => array(
+					'js/' . $jquery_ui_file_name
+				)
+			),
+			'library path' => 'sites/all/libraries/jquery-ui',
+			'version arguments' => array(
+				'file' => 'js/' . $jquery_ui_file_name,
+				'pattern' => '/v([\d.]+)/',
+				'lines' => 5,
+				'cols' => 20
+			)
+		);
+	}
+	
+	return $libraries;
+}
+
+
+/**
+ * 
+ * Implements hook_menu_alter
+ * @param $items
+ */
+
+function interactive_image_menu_alter(&$items) {
+	//for hiding hotspot content type in menus
+  if (isset($items['node/add/hotspot'])) {
+    //$items['node/add/hotspot']['type'] = MENU_DEFAULT_LOCAL_TASK;
+    $items['node/add/hotspot']['type'] = MENU_CALLBACK;
+  }
+}
