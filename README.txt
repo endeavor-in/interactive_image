@@ -14,6 +14,7 @@ Zooming: The module supports use of very large interactive images, and they will
 
 DEPENDENCIES:
 -------------
+- Libraries 2.x (http://drupal.org/project/libraries)
 - Jquery Cluetip plugin (www.jqueryui.com)
 - Jquery UI
 
@@ -24,15 +25,17 @@ INSTALLATION:
 
 2. Download Jquery UI from http://jqueryui.com/download with at least the draggable interaction included, and extract the contents into the following location: 'sites/all/libraries/jquery-ui'.
 
-3. Download and place the entire interactive_image directory into sites/all/modules/ directory.
+3. Download the Interactive Image module and extract its contents into sites/all/modules/ directory.
 
-3. Enable Interactive Image module by navigating to: 
+4. Download the Libraries API 2.x module and extract its contents into sites/all/modules/ directory.
+
+5. Enable Libraries API and Interactive Image modules by navigating to: 
 		Administer > Modules.
      
-4. Configure Interactive Image module by navigating to:
+6. Configure Interactive Image module by navigating to:
 		Administer > Configuration > User Interface > Interactive Image
 
-5. Configure permissions by assigning user roles that can 'create hotspots'.
+7. Configure permissions by assigning user roles that can 'create hotspots'.
 
 USAGE:
 ------

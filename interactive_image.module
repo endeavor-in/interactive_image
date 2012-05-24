@@ -172,11 +172,13 @@ function interactive_image_menu() {
 		'title' => 'Create Hotspot',
 		'page callback' => 'interactive_image_create_hotspot_submit',
 		'access callback' => true,
+    'type' => MENU_CALLBACK
   );
 
   $items['hotspot/show'] = array(
     'page callback'   => 'interactive_image_show_hotspot',
   	'access callback' => true,
+    'type' => MENU_CALLBACK
   );
 
   $items['admin/config/user-interface/interactive_image'] = array(
@@ -185,7 +187,7 @@ function interactive_image_menu() {
 	  'page callback' => 'drupal_get_form',
    	'page arguments' => array('interactive_image_settings'),
 	  'access arguments' => array('administer url aliases'),
-	  'weight' => -5,
+	  'weight' => -5
   );
   return $items;
 }
@@ -623,6 +625,6 @@ function interactive_image_libraries_info() {
 function interactive_image_menu_alter(&$items) {
 	//for hiding hotspot content type in menus
   if (isset($items['node/add/hotspot'])) {
-    $items['node/add/hotspot']['type'] = MENU_DEFAULT_LOCAL_TASK;
+    unset($items['node/add/hotspot']);
   }
 }
