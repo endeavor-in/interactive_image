@@ -11,6 +11,11 @@
  * fine details of selected areas. 
  */
 
+// Module defined constants
+
+const INTERACTIVE_IMAGE_ICON_WIDTH = 24;
+const INTERACTIVE_IMAGE_ICON_HEIGHT = 34;
+
 /**
  * Implements of hook_init().
  */
@@ -294,18 +299,7 @@ function interactive_image_preprocess_interactive_image(&$variables) {
  *   an array of all hotspots, with title, coordinates, etc 
  */
 function interactive_image_get_hotspots($nid) {
-  // Default hotspot dimensions.
-  $parent_node = node_load($nid);
-  $default_icon = _interactive_image_get_field_value('node', $parent_node, 'field_hotspot_icon', 'value');
-  if ($default_icon) {
-    $default_icon_width = 32;
-    $default_icon_height = 37;
-  }
-  else {
-    // Using the green downward arrow.
-    $default_icon_width = 24;
-    $default_icon_height = 34;
-  }
+  
   $hotspots = array();
 
   $efq       = new EntityFieldQuery();
@@ -354,14 +348,6 @@ function interactive_image_get_hotspots($nid) {
       }
       $hotspot_icon   = _interactive_image_get_field_value('node', $node, 'field_explicit_hotspot_image', 'value');
 
-      if ($hotspot_icon || $category_icon) {
-        $hotspot_width = 32;
-        $hotspot_height = 37;
-      }
-      else {
-        $hotspot_width = $default_icon_width;
-        $hotspot_height = $default_icon_height;
-      }
       $left         = strtok($coordinates, ',');
       $top           = strtok(',');
       $hotspots[] = array(
@@ -370,8 +356,8 @@ function interactive_image_get_hotspots($nid) {
         'left' => $left,
         'top' => $top,
         'hotspot_icon' => $hotspot_icon,
-        'hotspot_width' => $hotspot_width,
-        'hotspot_height' => $hotspot_height,
+        'hotspot_width' => INTERACTIVE_IMAGE_ICON_WIDTH,
+        'hotspot_height' => INTERACTIVE_IMAGE_ICON_HEIGHT,
         'category_name' => $category_name,
         'category_id' => $category_id,
         'category_icon' => $category_icon,
