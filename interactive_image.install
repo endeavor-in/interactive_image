@@ -1,252 +1,366 @@
 <?php
 
 /**
- * @file 
+ * @file
  * Install and uninstall functions for the interactive image module.
  */
 
 /**
  * Implements hook_install().
  */
-
 function interactive_image_install() {
-	
-	// create an interactive image style
-	$hotspot_image_style = array('name' => 'hotspot_image');
+  $t = get_t();
+  // Create an interactive image style.
+  $hotspot_image_style = array('name' => 'hotspot_image');
   $hotspot_image_style = image_style_save($hotspot_image_style);
   variable_set('hot_spot_image_style', $hotspot_image_style);
-  
-  // define the effect and widht,height 
-	$hotspot_image_effect = image_effect_definition_load('image_scale');
-	$hotspot_image_effect['data'] = array('width' => 20, 'height' => 20, 'upscale' => 0);
-	
-	//make a relation ship = style and effect  
-	$hotspot_image_effect['isid'] = $hotspot_image_style['isid'];
-	
-	//create a effect for style
-	image_effect_save($hotspot_image_effect);
-	
-	$node_options = array('0' => 'status');
-	
-	$interactive_image = array(
-		'type' => 'interactive_image',
-		'name' => st('Interactive Image'),
-		'base' => 'node_content',
-		'description' => st('Interactive Image is used to create multiple hot spot on a single image'),
-		'custom' => TRUE,
-		'modified' => TRUE			
-	);
-	
-	//promote-to-front-page and sticky-at-top-of-lists  options are remove interactive_image content-type
-	variable_set('node_options_interactive_image',	$node_options);
-	variable_set('comment_interactive_image',1);
-	//convert array to node type
-	$interactive_image = node_type_set_defaults($interactive_image);
-	//create interactive_image content-type
-	node_type_save($interactive_image);
-	
-	
-	$field_interactive_image = array(
-		'field_name' => 'field_interactive_image', 
-	  'type' => 'image'
-	);
 
-	$field_hotspot_image = array(
-		'field_name' => 'field_hotspot_icon', 
-  	'type' =>'image'
-	);
-	
+  // Define the effect of the image.
+  $hotspot_image_effect = image_effect_definition_load('image_scale');
+  $hotspot_image_effect['data'] = array(
+    'width' => 20,
+    'height' => 20,
+    'upscale' => 0,
+  );
 
-	$field_hotspot_label = array(
-		'field_name' => 'field_hotspot_label',
-		'type' => 'list_text',
-		'settings' => array(
-  		'allowed_values' => array(
-  			'use_title' => 'Use Title',
-  			'use_legends' => 'Use Legends',
-				'none'	=> 'None'
-  		),
-  		'allowed_values_function' => ''
-  	)
-	);
+  // Make the relationship.
+  $hotspot_image_effect['isid'] = $hotspot_image_style['isid'];
 
-	//create field for interactive_image content-type
-	field_create_field($field_interactive_image);
-	field_create_field($field_hotspot_image);
-	field_create_field($field_hotspot_label);
-	
-	$instance_interactive_image = array(
-  	'label' => 'Interactive Image',
-  	'field_name' => 'field_interactive_image', 
-		'entity_type' => 'node',
-		'bundle' => 'interactive_image',
-		'required' => TRUE,
-	); 
- 	
+  // Create the effect for style.
+  image_effect_save($hotspot_image_effect);
 
-	$instance_hotspot_image = array(
-  	'label' => 'Hotspot Icon',
-  	'field_name' => 'field_hotspot_icon', 
-		'entity_type' => 'node',
-		'bundle' => 'interactive_image',
-		'display' => array(
-  		'default' => array(
-  			'label' => 'hidden',
-  			'type' => 'hidden',
-		  )  		
-  	),
-  	'description' => st('This will be displayed as a 20x20 icon. Uploading a square image will ensure that it is not cropped to size')  	
-  ); 
-  
+  $node_options = array('0' => 'status');
+
+  $interactive_image = array(
+    'type' => 'interactive_image',
+    'name' => $t('Interactive Image'),
+    'base' => 'node_content',
+    'description' => $t('Interactive Image is used to create multiple hot spot on a single image'),
+    'custom' => TRUE,
+    'modified' => TRUE,
+  );
+
+  // Promote-to-front-page and sticky-at-top-of-lists options are removed.
+  variable_set('node_options_interactive_image', $node_options);
+  variable_set('comment_interactive_image', 1);
+  // Convert array to node type.
+  $interactive_image = node_type_set_defaults($interactive_image);
+  // Create interactive_image content-type.
+  node_type_save($interactive_image);
+
+  $field_interactive_image = array(
+    'field_name' => 'field_interactive_image',
+    'type' => 'image',
+  );
+
+  $field_hotspot_icon = array(
+    'field_name' => 'field_hotspot_icon',
+    'type' => 'list_text',
+    'settings' => array(
+      'allowed_values' => array(),
+      'allowed_values_function' => 'interactive_image_get_allowed_icon_values',
+    ),
+  );
+
+  $field_hotspot_label = array(
+    'field_name' => 'field_hotspot_label',
+    'type' => 'list_text',
+    'settings' => array(
+      'allowed_values' => array(
+        'use_title' => 'Use Title',
+        'use_legends' => 'Use Legends',
+        'none'  => 'None',
+      ),
+      'allowed_values_function' => '',
+    ),
+  );
+
+  $field_image_explicit_width = array(
+    'field_name' => 'field_image_explicit_width',
+    'type' => 'text',
+  );
+
+  // Create field for interactive_image content-type.
+  field_create_field($field_interactive_image);
+  field_create_field($field_hotspot_icon);
+  field_create_field($field_hotspot_label);
+  field_create_field($field_image_explicit_width);
+
+  $instance_interactive_image = array(
+    'label' => 'Interactive Image',
+    'field_name' => 'field_interactive_image',
+    'entity_type' => 'node',
+    'bundle' => 'interactive_image',
+    'required' => TRUE,
+  );
+
+  $instance_image_explicit_width = array(
+    'label' => 'Interactive Image Width',
+    'field_name' => 'field_image_explicit_width',
+    'entity_type' => 'node',
+    'bundle' => 'interactive_image',
+    'required' => FALSE,
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+    'description' => $t('Enter visible width(in pixels) of the Interactive Image. Leave empty for default value.'),
+  );
+
+  $instance_hotspot_icon = array(
+    'label' => 'Hotspot Icon',
+    'field_name' => 'field_hotspot_icon',
+    'entity_type' => 'node',
+    'bundle' => 'interactive_image',
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+    'description' => $t('Choose the hotspot icon image'),
+  );
+
   $instance_hotspot_label = array(
-  	'label' => 'Hotspot Label',
-  	'field_name' => 'field_hotspot_label',
-  	'entity_type' => 'node',
-  	'bundle' => 'interactive_image',
-  	'required' => TRUE,
-  	'widget' => array(
-  		'type' => 'options_buttons',  
-  		'weight' => -3		
-  	),
-  	'display' => array(
-  		'default' => array(
-  			'label' => 'hidden',
-  			'type' => 'hidden',
-  		)
-  	),
-  	'default_value' => array(
-  		'0' => array(
-  			'value' => 'none'	
-  		)
-  	)
+    'label' => 'Hotspot Label',
+    'field_name' => 'field_hotspot_label',
+    'entity_type' => 'node',
+    'bundle' => 'interactive_image',
+    'required' => TRUE,
+    'widget' => array(
+      'type' => 'options_buttons',
+      'weight' => -3,
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+    'default_value' => array(
+      '0' => array(
+        'value' => 'none',
+      ),
+    ),
   );
 
-  //bind the field to interactive_image content-type
- 	field_create_instance($instance_interactive_image); 
- 	field_create_instance($instance_hotspot_image);
- 	field_create_instance($instance_hotspot_label);
- 	
-	
-	$hotspot = array(
-		'type' => 'hotspot',
-		'name' => st('Hotspot'),
-		'base' => 'node_content',
-		'description' => st('Hotspot is used to create multiple hot spot on a single image'),
-		'custom' => TRUE,
-		'modified' => TRUE,
-		'locked' => FALSE,
-	);
-	
-	//promote-to-front-page and sticky-at-top-of-lists  options are remove Hotspot content-type
-	variable_set('node_options_hotspot',	$node_options);
-	variable_set('comment_hotspot',1);
-	//convert array to node type
-	$hotspot = node_type_set_defaults($hotspot);
-	//create Hotspot content-type
-	node_type_save($hotspot);
+  // Bind the field to interactive_image content-type.
+  field_create_instance($instance_interactive_image);
+  field_create_instance($instance_image_explicit_width);
+  field_create_instance($instance_hotspot_icon);
+  field_create_instance($instance_hotspot_label);
 
-	$field_coordinates = array(
-		'field_name' => 'field_coordinates', 
-	  	'type' =>'text'
-	);
-
-	$field_description = array(
-		'field_name' => 'field_description', 
-	 	'type' =>'text_long',
-	);
-
-	$field_parent_nid = array(
-		'field_name' => 'field_parent_nid', 
-	 	'type' => 'number_integer'	  
-	);
-
-	//create fields in hotspot content-type
-	field_create_field($field_coordinates);
-	field_create_field($field_description);
-	field_create_field($field_parent_nid);
-
-	$instance_coordinates = array(
-  	'label' => 'Co-ordiantes',
-  	'field_name' => 'field_coordinates', 
-		'entity_type'=>'node',
-		'bundle'=>'hotspot',
-	);
-  
-	$instance_description = array(
-	  'label' => 'Description',
-	  'field_name' => 'field_description', 
-		'entity_type'=>'node',
-		'bundle'=>'hotspot',
-	  	'settings' => array(
-  			'text_processing' => 1
-  		),
-  		'display' => array(
-  			'default' => array(
-  				'label' => 'hidden'
-  			)
-  		)
-	);
-  
-	$instance_parent_node = array(
-	 'label' => 'Parent Node',
-	 'field_name' => 'field_parent_nid',
-	 'entity_type'=>'node',
-		'bundle'=>'hotspot',  
+  $hotspot = array(
+    'type' => 'hotspot',
+    'name' => $t('Hotspot'),
+    'base' => 'node_content',
+    'description' => $t('Hotspot is used to create multiple hot spot on a single image'),
+    'custom' => TRUE,
+    'modified' => TRUE,
+    'locked' => FALSE,
   );
 
-	//bind the field to hotspot content-type
-	field_create_instance($instance_coordinates);
-	field_create_instance($instance_description);
-	field_create_instance($instance_parent_node);
+  // Promote-to-front-page and sticky-at-top-of-lists
+  // options are remove Hotspot content-type.
+  variable_set('node_options_hotspot', $node_options);
+  variable_set('comment_hotspot', 1);
+  // Convert array to node type.
+  $hotspot = node_type_set_defaults($hotspot);
+  // Create Hotspot content-type.
+  node_type_save($hotspot);
+
+  $field_coordinates = array(
+    'field_name' => 'field_coordinates',
+    'type' => 'text',
+  );
+
+  $field_description = array(
+    'field_name' => 'field_description',
+    'type' => 'text_long',
+  );
+
+  $field_explicit_hotspot_image = array(
+    'field_name' => 'field_explicit_hotspot_image',
+    'type' => 'list_text',
+    'settings' => array(
+      'allowed_values' => array(),
+      'allowed_values_function' => 'interactive_image_get_allowed_icon_values',
+    ),
+  );
+
+  $field_hotspot_category = array(
+    'field_name' => 'field_hotspot_category',
+    'type' => 'taxonomy_term_reference',
+    'required' => FALSE,
+    'settings' => array(
+      'allowed_values' => array(
+        array(
+          'vocabulary' => 'interactive_image_vocabulary',
+          'parent' => 0,
+        ),
+      ),
+    ),
+  );
+
+  $field_category_icon = array(
+    'field_name' => 'field_category_icon',
+    'type' => 'list_text',
+    'settings' => array(
+      'allowed_values' => array(),
+      'allowed_values_function' => 'interactive_image_get_allowed_icon_values',
+    ),
+  );
+  field_create_field($field_category_icon);
+
+  // Creating vocabulary to save categories.
+  taxonomy_vocabulary_save((object) array(
+    'name' => 'Interactive Image Vocabulary',
+    'machine_name' => 'interactive_image_vocabulary',
+  ));
+
+  $field_parent_nid = array(
+    'field_name' => 'field_parent_nid',
+    'type' => 'number_integer',
+  );
+
+  // Create fields in hotspot content-type.
+  field_create_field($field_coordinates);
+  field_create_field($field_description);
+  field_create_field($field_explicit_hotspot_image);
+  field_create_field($field_hotspot_category);
+  field_create_field($field_parent_nid);
+
+  $instance_coordinates = array(
+    'label' => 'Co-ordiantes',
+    'field_name' => 'field_coordinates',
+    'entity_type' => 'node',
+    'bundle' => 'hotspot',
+  );
+
+  $instance_description = array(
+    'label' => 'Description',
+    'field_name' => 'field_description',
+    'entity_type' => 'node',
+    'bundle' => 'hotspot',
+    'settings' => array(
+      'text_processing' => 1,
+    ),
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+      ),
+    ),
+  );
+
+  $instance_explicit_hotspot_image = array(
+    'label' => 'Hotspot Icon',
+    'field_name' => 'field_explicit_hotspot_image',
+    'entity_type' => 'node',
+    'bundle' => 'hotspot',
+    'display' => array(
+      'default' => array(
+        'label' => 'hidden',
+        'type' => 'hidden',
+      ),
+    ),
+    'description' => $t('Choose the hotspot icon image'),
+  );
+
+  $instance_hotspot_category = array(
+    'field_name' => 'field_hotspot_category',
+    'entity_type' => 'node',
+    'label' => 'Category',
+    'bundle' => 'hotspot',
+    'required' => FALSE,
+    'display' => array(
+      'teaser' => array('type' => 'hidden'),
+    ),
+    'description' => 'You can ' . l($t('Add Category'), 'admin/structure/taxonomy/interactive_image_vocabulary/add', array(
+                      'attributes' => array(
+                        // If overlay is disabled opens up in new window/tab.
+                        'target' => '_blank',
+                      ),
+                      )
+    ) . ' to the Interactive Image.<br /> ',
+  );
+
+  $instance_category_icon = array(
+    'field_name' => 'field_category_icon',
+    'entity_type' => 'taxonomy_term',
+    'label' => 'Category Image',
+    'bundle' => 'interactive_image_vocabulary',
+    'required' => FALSE,
+    'display' => array(
+      'teaser' => array('type' => 'hidden'),
+    ),
+    'description' => $t('Choose the hotspot icon image'),
+  );
+
+  field_create_instance($instance_category_icon);
+
+  $instance_parent_node = array(
+    'label' => 'Parent Node',
+    'field_name' => 'field_parent_nid',
+    'entity_type' => 'node',
+    'bundle' => 'hotspot',
+  );
+
+  // Bind the field to hotspot content-type.
+  field_create_instance($instance_coordinates);
+  field_create_instance($instance_description);
+  field_create_instance($instance_explicit_hotspot_image);
+  field_create_instance($instance_hotspot_category);
+  field_create_instance($instance_parent_node);
 }
 
 /**
  * Implements hook_uninstall().
  */
-  
-
 function interactive_image_uninstall() {
-	
-	//delete hotspot_image_style
-	$hotspot_image_style = variable_get('hot_spot_image_style');
-  image_style_delete($hotspot_image_style,'');
-	
-	//delete interactive_image fields
-	$query = new EntityFieldQuery();
-	$result_interactive_image = $query
-  					->entityCondition('entity_type',	'node')
-  					->propertyCondition('type',	'interactive_image')
-  					->execute();
 
-	if ($result_interactive_image)
-  {
-  	$nids = array_keys($result_interactive_image['node']);
-  	node_delete_multiple($nids);
-	}
-  
-	//delete hotspot field
-	$query_hotspot 	= new EntityFieldQuery();
+  // Delete hotspot_image_style.
+  $hotspot_image_style = variable_get('hot_spot_image_style');
+  image_style_delete($hotspot_image_style, '');
+
+  // Delete interactive_image type nodes.
+  $query = new EntityFieldQuery();
+  $result_interactive_image = $query
+    ->entityCondition('entity_type', 'node')
+    ->propertyCondition('type', 'interactive_image')
+    ->execute();
+
+  if ($result_interactive_image) {
+    $nids = array_keys($result_interactive_image['node']);
+    node_delete_multiple($nids);
+  }
+
+  // Delete hotspot type nodes.
+  $query_hotspot   = new EntityFieldQuery();
   $result_hotspot = $query_hotspot
-  					->entityCondition('entity_type',	'node')
-  					->propertyCondition('type',	'hotspot')
-  					->execute();
-	if ($result_hotspot)
-	{
-	 	$nids_hotspot = array_keys($result_hotspot['node']);
-	 	node_delete_multiple($nids_hotspot);
-	}
+    ->entityCondition('entity_type', 'node')
+    ->propertyCondition('type', 'hotspot')
+    ->execute();
+  if ($result_hotspot) {
+    $nids_hotspot = array_keys($result_hotspot['node']);
+    node_delete_multiple($nids_hotspot);
+  }
 
-	//delete interactive_image and hotspot content-types
-	node_type_delete('interactive_image');
-	node_type_delete('hotspot');
-	
-	//delete the node_options variable
-	variable_del('node_options_interactive_image');
-	variable_del('node_options_hotspot');
-	variable_del('comment_interactive_image');
-	variable_del('comment_hotspot');
-	variable_del('interactive_image_cluetip_settings');
+  // Delete interactive_image and hotspot content-types.
+  node_type_delete('interactive_image');
+  node_type_delete('hotspot');
+
+  // Delete the node_options variable.
+  variable_del('node_options_interactive_image');
+  variable_del('node_options_hotspot');
+  variable_del('comment_interactive_image');
+  variable_del('comment_hotspot');
+  variable_del('interactive_image_cluetip_settings');
   variable_del('interactive_image_visible_width');
-  
-}
 
+  // Delete the vocabulary.
+  $vocabulary = taxonomy_vocabulary_machine_name_load('interactive_image_vocabulary');
+  taxonomy_vocabulary_delete($vocabulary->vid);
+
+}

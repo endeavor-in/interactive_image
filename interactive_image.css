@@ -1,79 +1,163 @@
 /**
+ *  Interactive image wrapper
+ */
+.ui-autocomplete {
+  width: 100px;
+  height: 200px;
+  overflow-y: scroll;
+  overflow-x: hidden;
+}
+
+#interactive-image-wrapper {
+  line-height: 0;
+}
+
+#icon-selector-wrapper select #icon-preview {
+  float: left;
+}
+
+#icon-selector-wrapper .description {
+  clear: both;
+}
+
+#icon-preview {
+  margin-left: 5px;
+}
+
+/**
 * cluetip form and new hotspot form close icon 
 */
 
-.close,.cluetip-close,#cluetip-close
-{
-	background-image:url('close.png') !important;
-	background-repeat: no-repeat;
-	height: 15px;
-	width: 15px;
-	float: right;	
-	cursor: pointer;
+#floating .close {
+  background-image: url('close.png') !important;
+  background-repeat: no-repeat;
+  height: 15px;
+  width: 15px;
+  float: right;
+  cursor: pointer;
 }
+
+/*.cluetip-close {
+  margin-top:-45px;
+}*/
 
 /**
 * hotspot default icon
 */
 
-.hotspot-image
-{
-	background-image: url('hotspot.png');
+.hotspot-image {
+  background-image: url('hotspot.png');
 }
 
+.hot-area {
+  background-color: yellow;
+  opacity: 0.2;
+}
 
-#cluetip-inner
-{
-	display: block !important;
-} 
+#cluetip-inner {
+  display: block !important;
+}
 
 .hotspot {
-	cursor:pointer;
+  cursor: pointer;
+  display: none;
 }
 
-#floating form .form-submit{ display:none }
-
+#floating form .form-submit,
 #floating form .wysiwyg-toggle-wrapper,
 #floating form .fieldset-wrapper,
-#floating form .form-wrapper
-{
-	display: none;
+#floating form .form-wrapper {
+  display: none;
 }
 
-#floating form #fake-submit{
-	margin-top: 10px;
+#floating form #fake-submit {
+  margin-top: 10px;
 }
 
-.container-inline div, .container-inline label {
-display:block !important;
+#floating form #cancel-submit {
+  margin-top: 10px;
+  float: right;
 }
 
-.zoom-image
-{
-	background-image: url('Increase_and_decrease.png');
-	background-repeat: no-repeat;
-	border: none;
-	background-position:2px 5px;
-	background-color: #fff;
-	width: 36px;
-	height: 38px;
+.container-inline div .container-inline label {
+  display: block !important;
 }
 
-.zoomout, .zoomin
-{
-	width: 30px;
+.zoom-image {
+  background-image: url('Increase_and_decrease.png');
+  background-repeat: no-repeat;
+  border: none;
+  background-position: 2px 5px;
+  background-color: #fff;
+  width: 36px;
+  height: 38px;
+}
+
+.zoomout .zoomin .lasso {
+  width: 30px;
 }
 
 /**
 * cluetip form and new hotspot form close icon 
 */
-.legend-title
-{
-	font-size: 22px;
-	text-decoration: underline;
+.legend-title {
+  font-size: 22px;
+  text-decoration: underline;
 }
 
-#legends
-{
-	padding:5px 20px;
+#legends {
+  padding: 5px 20px;
+}
+
+.btn {
+  -moz-border-bottom-colors: none;
+  -moz-border-image: none;
+  -moz-border-left-colors: none;
+  -moz-border-right-colors: none;
+  -moz-border-top-colors: none;
+  -moz-transition: all 0.1s linear 0s;
+  background-color: #e6e6e6;
+  background-image: -moz-linear-gradient(center top , #ffffff, #ffffff 25%, #e6e6e6);
+  background-repeat: no-repeat;
+  border-color: #cccccc #cccccc #bbbbbb;
+  border-radius: 4px 4px 4px 4px;
+  border-style: solid;
+  border-width: 1px;
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.2) inset, 0 1px 2px rgba(0, 0, 0, 0.05);
+  color: #018fe2;
+  cursor: pointer;
+  display: inline-block;
+  font-size: 13px;
+  line-height: normal;
+  padding: 5px 14px 6px;
+  text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
+}
+
+#category-controls {
+  float: left;
+  margin: 0;
+  padding: 0;
+}
+
+#category-controls li,
+#other-controls li {
+  float: left;
+  list-style-type: none;
+  padding: 5px;
+}
+
+#category-controls li input,
+#category-controls li span {
+  float: left;
+}
+
+#other-controls {
+  float: right;
+  margin: 0;
+  padding: 0;
+}
+
+.lasso {
+  font-size: 1.25em;
+  padding: 1px;
 }
