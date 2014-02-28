@@ -105,40 +105,6 @@ function interactive_image_init() {
 }
 
 /**
- * Scans the /misc/ui folder and retrieves the exact name of Jquery UI file.
- * 
- * @param string $js_path
- *   Path of the js folder of Jquery UI relative to base path
- *
- * @return string
- *   the name of the jquery-ui js file, if found
- *   FALSE if the required file is not found
- */
-function _interactive_image_get_jquery_ui_file_name($js_path) {
-  $abs_js_path = $_SERVER['DOCUMENT_ROOT'] . base_path() . $js_path;
-
-  $jquery_ui_file_name = 'jquery-ui.js';
-
-  $jquery_ui_js_files = array();
-
-  // Scans the directory for files only if directory exists.
-  if (is_dir($abs_js_path)) {
-    $jquery_ui_js_files = scandir($abs_js_path);
-  }
-  if (is_array($jquery_ui_js_files)) {
-    foreach ($jquery_ui_js_files as $file) {
-      if (preg_match('/jquery-ui/', $file)) {
-        $jquery_ui_file_name = $file;
-        break;
-      }
-    }
-  }
-
-  return $jquery_ui_file_name;
-}
-
-
-/**
  * Implements hook_menu().
  */
 function interactive_image_menu() {
