@@ -11,13 +11,12 @@
  * fine details of selected areas. 
  */
 
-// Module defined constants
-
+// Module defined constants.
 const INTERACTIVE_IMAGE_ICON_WIDTH = 24;
 const INTERACTIVE_IMAGE_ICON_HEIGHT = 34;
 
 /**
- * Implements of hook_init().
+ * Implements hook_init().
  */
 function interactive_image_init() {
   global $user;
@@ -51,7 +50,7 @@ function interactive_image_init() {
 
         if (isset($library['error'])) {
           drupal_set_message(t('!error_message <br /> !download and Install the library in !library_path', array(
-            '!download' => l(t(' Download'), $library['download url']),
+            '!download' => l(t('Download'), $library['download url']),
             '!error_message' => $library['error message'],
             '!library_path' => $library['library path'],
            )
@@ -299,7 +298,6 @@ function interactive_image_preprocess_interactive_image(&$variables) {
  *   an array of all hotspots, with title, coordinates, etc 
  */
 function interactive_image_get_hotspots($nid) {
-  
   $hotspots = array();
 
   $efq       = new EntityFieldQuery();
@@ -438,7 +436,7 @@ function interactive_image_create_hotspot($form = NULL, &$form_state = NULL, $im
     '#type' => 'select',
     '#title' => 'Category',
     '#options' => $category_options,
-    '#description' => 'You can ' . l(t('Add Category'), 'admin/structure/taxonomy/interactive_image_vocabulary/add', array(
+    '#description' => t('You can') . ' ' . l(t('Add Category'), 'admin/structure/taxonomy/interactive_image_vocabulary/add', array(
                       'attributes' => array(
                         // If overlay is disabled opens up in new window/tab.
                         'target' => '_blank',
