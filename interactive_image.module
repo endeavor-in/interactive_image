@@ -763,6 +763,9 @@ function interactive_image_form_alter(&$form, &$form_state, $form_id) {
           'autocomplete' => 'off',
           'class' => array('category-selector'),
         );
+        $form['#attached']['js'] = array(
+          drupal_get_path('module', 'interactive_image') . '/interactive_image_form_actions.js'
+        );
       }
     }
   }
@@ -798,7 +801,9 @@ function interactive_image_preview_icon($form, $form_state) {
       $src = $icons_collection_path . '/' . $basename . '.png';
     }
     $commands[] = ajax_command_remove('#icon-preview');
-    $commands[] = ajax_command_after('#icon-selector-wrapper select', '<img id="icon-preview" src="' . $src . '" />');
+    if ($src) {
+      $commands[] = ajax_command_append('#icon-selector-wrapper .field-suffix', '<img id="icon-preview" src="' . $src . '" />');
+    }    
     return array('#type' => 'ajax', '#commands' => $commands);
   }
 }
