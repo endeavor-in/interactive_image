@@ -205,7 +205,7 @@
 
     });
 
-    //check if user has permission to create hotspots 
+    //check if user has permission to create hotspots
     var createHotspots = Drupal.settings.interactive_image.create_hotspots;
     if (createHotspots) {
       //$('#interactive-image-wrapper').selectable();

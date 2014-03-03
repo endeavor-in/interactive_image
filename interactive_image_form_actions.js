@@ -6,7 +6,7 @@
         $('#icon-selector-wrapper select').val('_none');
         $('#icon-preview').remove();
       });
-      
+
       // Likewise, when hotspot icon is selected, the hotspot category is reset to none
       $('#icon-selector-wrapper select').change(function() {
         $('#edit-field-hotspot-category select').val('_none');
