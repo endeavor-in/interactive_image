@@ -749,7 +749,10 @@ function interactive_image_form_alter(&$form, &$form_state, $form_id) {
 
         // Icon preview (for default value).
         $default_value = $form[$field_name][$language]['#default_value'];
-        $icon_preview_img = NULL;
+
+        // Inserts an empty field suffix, which is used for dynamic behaviors.
+        $icon_preview_img = '&nbsp;';
+
         if (isset($default_value[0])) {
           $icons_collection_path = base_path() . drupal_get_path('module', 'interactive_image') . '/icons-collection';
           $src = $icons_collection_path . '/' . $default_value[0] . '.png';
